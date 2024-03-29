@@ -46,7 +46,7 @@ async def get_reco(
 
     # Write your code here
     # Проверка совпадения токена с ожидаемым токеном
-    true_token = "your_expected_token_here"
+    true_token = "darias_token"
     auth_token = token.credentials
     if auth_token != true_token:
         raise HTTPException(status_code=401, detail="Wrong token")
