@@ -1,17 +1,14 @@
 from typing import List
 
-from fastapi import (  # Импорт необходимых классов и исключений из FastAPI
-    APIRouter,
-    Depends,
-    FastAPI,
-    HTTPException,
-    Request,
-)
-from fastapi.security import HTTPBearer  # Импорт механизма аутентификации HTTPBearer из FastAPI
+# Импорт необходимых классов и исключений из FastAPI
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+
+# Импорт механизма аутентификации HTTPBearer из FastAPI
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel
 
 # Импорт исключений для обработки ошибок поиска модели и пользователя
-from service.api.exceptions import ModelNotFoundError, UserNotFoundError  # Импортировала модель ЛР1
+from service.api.exceptions import ModelNotFoundError, UserNotFoundError
 from service.log import app_logger
 
 
@@ -20,9 +17,13 @@ class RecoResponse(BaseModel):
     items: List[int]
 
 
-models_list = ["tunnel_test_request"]  # Инициализация списка имен моделей
+# Инициализация списка имен моделей
+models_list = ["tunnel_test_request"]
 
 router = APIRouter()
+
+# Создание экземпляра объекта HTTPBearer для аутентификации
+bearer = HTTPBearer()
 
 
 @router.get(
@@ -44,14 +45,13 @@ async def get_reco(
     app_logger.info(f"Request for model: {model_name}, user_id: {user_id}")
 
     # Write your code here
-
     # Проверка совпадения токена с ожидаемым токеном
     true_token = "your_expected_token_here"
     auth_token = token.credentials
     if auth_token != true_token:
         raise HTTPException(status_code=401, detail="Wrong token")
 
-    # # Вызов исключения при отсутствии указанной модели в списке моделей
+    # Вызов исключения при отсутствии указанной модели в списке моделей
     if model_name not in models_list:
         raise ModelNotFoundError(error_message=f"Model {model_name} not found")
 
