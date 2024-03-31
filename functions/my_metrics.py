@@ -17,6 +17,25 @@ InteractionFold: TypeAlias = Tuple[np.ndarray, np.ndarray, dict[str, Any]]
 InteractionFolds: TypeAlias = Iterator[InteractionFold]
 _N_SPLITS = 3
 
+# Предварительно подсчитанные метрики
+metrics: dict[str, MetricAtK] = {
+    f"top@{k}_precision": Precision(k=k),
+    f"top@{k}_recall": Recall(k=k),
+    f"top@{k}_ndcg": NDCG(k=k),
+    f"top@{k}_map": MAP(k=k),
+    f"top@{k}_serendipity": Serendipity(k=k),
+    f"top@{k}_mean_inv_user_freq": MeanInvUserFreq(k=k),
+} for k in [1, 5, 10]
+
+# Предварительно подсчитанный разбиватель
+splitter = TimeRangeSplitter(
+    test_size="7D",
+    n_splits=_N_SPLITS,
+    filter_already_seen=True,
+    filter_cold_items=True,
+    filter_cold_users=True,
+)
+
 def _split_dataset(splitter: Splitter, interactions: Interactions) -> InteractionFolds:
     """Разбивает взаимодействия на фолды с помощью разбивателя."""
     return splitter.split(interactions, collect_fold_stats=True)
@@ -48,7 +67,6 @@ def metrics_culc(
     interactions: Interactions,
     model: ModelBase,
     k_recos: int,
-    metrics: dict
 ) -> ModelMetrics:
     """Вычисляет метрики модели на валидационном наборе данных."""
     if not model:
