@@ -48,6 +48,7 @@ def metrics_culc(
     interactions: Interactions,
     model: ModelBase,
     k_recos: int,
+    metrics: dict
 ) -> ModelMetrics:
     """Вычисляет метрики модели на валидационном наборе данных."""
     if not model:
