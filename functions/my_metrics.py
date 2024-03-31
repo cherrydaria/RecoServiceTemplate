@@ -17,28 +17,34 @@ InteractionFold: TypeAlias = Tuple[np.ndarray, np.ndarray, dict[str, Any]]
 InteractionFolds: TypeAlias = Iterator[InteractionFold]
 _N_SPLITS = 3
 
-# Предварительно подсчитанные метрики
-metrics: dict[str, MetricAtK] = {
-    f"top@{k}_precision": Precision(k=k),
-    f"top@{k}_recall": Recall(k=k),
-    f"top@{k}_ndcg": NDCG(k=k),
-    f"top@{k}_map": MAP(k=k),
-    f"top@{k}_serendipity": Serendipity(k=k),
-    f"top@{k}_mean_inv_user_freq": MeanInvUserFreq(k=k),
-} for k in [1, 5, 10]
 
-# Предварительно подсчитанный разбиватель
-splitter = TimeRangeSplitter(
-    test_size="7D",
-    n_splits=_N_SPLITS,
-    filter_already_seen=True,
-    filter_cold_items=True,
-    filter_cold_users=True,
-)
+def _get_metrics(k: int) -> dict[str, MetricAtK]:
+    """Возвращает словарь метрик для конкретного значения k."""
+    return {
+        f"top@{k}_precision": Precision(k=k),
+        f"top@{k}_recall": Recall(k=k),
+        f"top@{k}_ndcg": NDCG(k=k),
+        f"top@{k}_map": MAP(k=k),
+        f"top@{k}_serendipity": Serendipity(k=k),
+        f"top@{k}_mean_inv_user_freq": MeanInvUserFreq(k=k),
+    }
+
+
+def _get_splitter() -> Splitter:
+    """Возвращает разбиватель по умолчанию."""
+    return TimeRangeSplitter(
+        test_size="7D",
+        n_splits=_N_SPLITS,
+        filter_already_seen=True,
+        filter_cold_items=True,
+        filter_cold_users=True,
+    )
+
 
 def _split_dataset(splitter: Splitter, interactions: Interactions) -> InteractionFolds:
     """Разбивает взаимодействия на фолды с помощью разбивателя."""
     return splitter.split(interactions, collect_fold_stats=True)
+
 
 def _calculate_model_metrics(
     model: ModelBase, metrics: dict[str, MetricAtK], df_train: pd.DataFrame, df_test: pd.DataFrame, k_recos: int
@@ -63,9 +69,12 @@ def _calculate_model_metrics(
     )
     return metric_values, train_time
 
+
 def metrics_culc(
     interactions: Interactions,
+    metrics: dict[str, MetricAtK] | None,
     model: ModelBase,
+    splitter: Splitter | None,
     k_recos: int,
 ) -> ModelMetrics:
     """Вычисляет метрики модели на валидационном наборе данных."""
@@ -73,7 +82,10 @@ def metrics_culc(
         raise ValueError("Модель не должна быть пустой")
     if not interactions:
         raise ValueError("Набор взаимодействий не должен быть пустым")
+    if not metrics or len(metrics) == 0:
+        metrics = {metric_name: metric for k in [1, 5, 10] for metric_name, metric in _get_metrics(k).items()}
 
+    splitter = _get_splitter() if not splitter else splitter
     results = []
 
     for train_ids, test_ids, fold_info in _split_dataset(splitter=splitter, interactions=interactions):
