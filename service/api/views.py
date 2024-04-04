@@ -13,6 +13,9 @@ from service.log import app_logger
 
 # Импорт библиотеки для распаковки файла
 import dill
+import os
+
+import models
 
 class RecoResponse(BaseModel):
     user_id: int
@@ -28,7 +31,8 @@ router = APIRouter()
 bearer = HTTPBearer()
 
 # Распаковка файла
-with open('userknn.dill', 'rb') as f:
+userknn_path = os.path.join(os.getcwd(), 'userknn.dill')
+with open(userknn_path, 'rb') as f:
     User_KNN = dill.load(f)
 
 @router.get(
