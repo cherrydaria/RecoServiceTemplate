@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from service.api.exceptions import ModelNotFoundError, UserNotFoundError
 from service.log import app_logger
 
+# Импорт библиотеки для распаковки файла
+import dill
 
 class RecoResponse(BaseModel):
     user_id: int
@@ -18,13 +20,16 @@ class RecoResponse(BaseModel):
 
 
 # Инициализация списка имен моделей
-models_list = ["tunnel_test_request"]
+models_list = ["tunnel_test_request", "User_KNN"]
 
 router = APIRouter()
 
 # Создание экземпляра объекта HTTPBearer для аутентификации
 bearer = HTTPBearer()
 
+# Распаковка файла
+with open('userknn.dill', 'rb') as f:
+    User_KNN = dill.load(f)
 
 @router.get(
     path="/health",
